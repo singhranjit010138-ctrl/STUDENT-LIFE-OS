@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">1075465312288</string>
+    <string name="google_api_key" translatable="false">AIzaSyASp63PC_LoKtKbeeED2NjBUu9cHstKT4U</string>
+    <string name="google_app_id" translatable="false">1:1075465312288:android:77c2c09d2829abd0c78445</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyASp63PC_LoKtKbeeED2NjBUu9cHstKT4U</string>
+    <string name="google_storage_bucket" translatable="false">student-life-os-77841.firebasestorage.app</string>
+    <string name="project_id" translatable="false">student-life-os-77841</string>
+</resources>

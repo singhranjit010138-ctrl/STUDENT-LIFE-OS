@@ -1,0 +1,4 @@
+#Fri Nov 13 03:15:23 IST 2026
+base.0=C\:\\Users\\gaura\\OneDrive\\Desktop\\StudentLifeOS_AndroidStudio_Fresh\\StudentLifeOS_AndroidStudio\\app\\build\\intermediates\\dex\\debugAndroidTest\\mergeProjectDexDebugAndroidTest\\0\\classes.dex
+path.0=0/classes.dex
+renamed.0=classes.dex

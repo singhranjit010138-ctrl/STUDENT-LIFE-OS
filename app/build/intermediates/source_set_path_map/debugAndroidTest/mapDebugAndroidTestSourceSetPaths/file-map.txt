@@ -1,0 +1,4 @@
+com.studentlifeos.app.test.app-androidTest-0 C:\Users\gaura\OneDrive\Desktop\StudentLifeOS_AndroidStudio_Fresh\StudentLifeOS_AndroidStudio\app\build\generated\res\resValues\androidTest\debug
+com.studentlifeos.app.test.app-mergeDebugAndroidTestResources-1 C:\Users\gaura\OneDrive\Desktop\StudentLifeOS_AndroidStudio_Fresh\StudentLifeOS_AndroidStudio\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.studentlifeos.app.test.app-mergeDebugAndroidTestResources-2 C:\Users\gaura\OneDrive\Desktop\StudentLifeOS_AndroidStudio_Fresh\StudentLifeOS_AndroidStudio\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.studentlifeos.app.test.app-debugAndroidTest-3 C:\Users\gaura\OneDrive\Desktop\StudentLifeOS_AndroidStudio_Fresh\StudentLifeOS_AndroidStudio\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Life OS</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Global Connect Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080b14; --panel:#111827; --panel2:#151e30;
+  --text:#f3f6ff; --muted:#8994aa; --accent:#8b7cff;
+  --border:#253047; --green:#35d39a; --red:#ff6685;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#0c1220;border-right:1px solid var(--border);padding:25px 16px;position:fixed;inset:0 auto 0 0;overflow-y:auto;z-index:5}
+.logo{font-size:21px;font-weight:800;margin:5px 10px 32px}
+.logo span{color:var(--accent)}
+.nav-label{font-size:10px;color:var(--muted);letter-spacing:2px;margin:23px 10px 10px}
+.nav button{display:flex;width:100%;padding:12px;border:0;background:transparent;color:var(--muted);border-radius:10px;text-align:left;margin:3px 0;gap:12px;align-items:center}
+.nav button:hover,.nav button.active{background:#202943;color:white}
+.nav button.active{border-left:3px solid var(--accent)}
+.main{margin-left:245px;width:calc(100% - 245px);padding:28px 34px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;gap:15px}
+.topbar h1{font-size:25px}
+.muted{color:var(--muted);font-size:13px;margin-top:7px}
+.profile{background:var(--panel);padding:10px 15px;border:1px solid var(--border);border-radius:12px}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:20px 0}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;min-width:0}
+.stat-label{font-size:12px;color:var(--muted)}
+.stat-value{font-size:27px;font-weight:800;margin-top:12px}
+.stat-note{font-size:11px;color:var(--green);margin-top:7px}
+.section-title{font-size:17px;font-weight:700;margin-bottom:16px}
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.btn{border:0;border-radius:9px;padding:10px 15px;background:var(--accent);color:white;font-weight:600}
+.btn.secondary{background:#222d43;color:#e7eaff}
+.btn.danger{background:#4a2030;color:#ff9ab0}
+.btn.small{padding:7px 10px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.field{width:100%;padding:11px 12px;background:#0b1220;color:white;border:1px solid var(--border);border-radius:9px;margin:7px 0 13px;outline:none}
+.field:focus{border-color:var(--accent)}
+label{font-size:12px;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.item{padding:13px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.item:last-child{border:0}
+.tag{font-size:10px;padding:5px 8px;border-radius:20px;background:#28264b;color:#b7adff}
+.progress{height:7px;background:#263047;border-radius:10px;overflow:hidden;margin-top:12px}
+.progress span{display:block;height:100%;background:var(--accent);border-radius:10px}
+.empty{color:var(--muted);font-size:13px;padding:15px 0}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.show{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:23px;width:min(450px,100%);max-height:90vh;overflow:auto}
+.modal-head{display:flex;justify-content:space-between;margin-bottom:20px}
+.close{background:transparent;border:0;color:white;font-size:22px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:13px;border-bottom:1px solid var(--border)}
+th{color:var(--muted)}
+.mobile-menu{display:none}
+.timer{font-size:55px;font-weight:800;text-align:center;margin:25px}
+.center{text-align:center}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){
+.sidebar{width:0;padding:0;overflow:hidden}
+.sidebar.open{width:245px;padding:25px 16px}
+.main{margin:0;width:100%;padding:18px}
+.mobile-menu{display:block}
+.topbar h1{font-size:19px}
+.grid{gap:10px}.card{padding:14px}
+.stat-value{font-size:22px}
+.form-grid{grid-template-columns:1fr}
+}
+
+/* Global Connect */
+.gc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.gc-panel{background:var(--panel2);min-width:0}
+.gc-panel label{display:block;margin:10px 0 6px;color:var(--muted);font-size:13px}
+.gc-check{display:flex!important;align-items:center;gap:9px}
+.gc-check input{width:16px;height:16px}
+.gc-list{display:flex;flex-direction:column;gap:9px;margin-top:12px;max-height:330px;overflow:auto}
+.gc-person,.gc-group{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--panel);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gc-person strong,.gc-group strong{display:block;font-size:14px}
+.gc-person small,.gc-group small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.gc-person button,.gc-group button{white-space:nowrap;padding:8px 11px;font-size:12px}
+.gc-note{font-size:12px;line-height:1.5;margin-top:10px;color:var(--muted)}
+.gc-messages{height:260px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:12px 2px}
+.gc-bubble{max-width:86%;padding:9px 12px;border-radius:12px;background:var(--panel2);font-size:13px;overflow-wrap:anywhere}
+.gc-bubble.mine{align-self:flex-end;background:#302a65}
+.gc-bubble small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
+.gc-compose{display:flex;gap:8px}
+.gc-compose .field{flex:1;min-width:0}
+@media(max-width:760px){.gc-grid{grid-template-columns:1fr}.gc-messages{height:220px}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+<div class="logo">STUDENT<span>OS.</span></div>
+<div class="nav">
+<div class="nav-label">WORKSPACE</div>
+<button class="active" data-page="dashboard">◈ Dashboard</button>
+<button data-page="tasks">✓ Tasks & To-do</button>
+<button data-page="attendance">▦ Attendance</button>
+<button data-page="academics">▤ Academics & SGPA</button>
+<button data-page="timetable">◷ Timetable</button>
+<button data-page="pomodoro">⏱️ Focus Timer</button>
+<div class="nav-label">PERSONAL</div>
+<button data-page="notes">▧ Notes</button>
+<button data-page="expenses">₹ Expenses</button>
+<button data-page="exams">▣ Exam Planner</button>
+<button data-page="analytics">⌁ Analytics</button>
+<button data-page="settings">⚙️ Settings</button>
+<div class="nav-label">CONNECT</div>
+<button data-page="globalConnect">🌍 Global Connect</button>
+</div>
+</aside>
+
+<main class="main">
+<header class="topbar">
+<div>
+<button class="btn secondary mobile-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+<h1 id="pageTitle">Dashboard</h1>
+<p class="muted" id="today"></p>
+</div>
+<div class="profile">🎓 <span id="headerName">Student</span></div>
+</header>
+
+<section class="page active" id="dashboard">
+<div class="card">
+<h2>Welcome back, <span id="welcomeName">Student</span> 👋</h2>
+<p class="muted">Your entire student life, organized in one place.</p>
+</div>
+<div class="grid">
+<div class="card"><div class="stat-label">TOTAL TASKS</div><div class="stat-value" id="totalTasks">0</div><div class="stat-note">All your tasks</div></div>
+<div class="card"><div class="stat-label">COMPLETED</div><div class="stat-value" id="doneTasks">0</div><div class="stat-note">Tasks completed</div></div>
+<div class="card"><div class="stat-label">ATTENDANCE</div><div class="stat-value" id="dashAttendance">0%</div><div class="stat-note">Overall attendance</div></div>
+<div class="card"><div class="stat-label">MONTHLY EXPENSE</div><div class="stat-value" id="dashExpense">₹0</div><div class="stat-note">Tracked spending</div></div>
+</div>
+<div class="two-col">
+<div class="card"><h3 class="section-title">Today's Tasks</h3><div id="dashboardTasks"></div></div>
+<div class="card"><h3 class="section-title">Quick Actions</h3>
+<div class="actions">
+<button class="btn" onclick="openTaskModal()">+ Add Task</button>
+<button class="btn secondary" onclick="showPage('attendance')">Attendance</button>
+<button class="btn secondary" onclick="showPage('notes')">New Note</button>
+</div>
+<div style="margin-top:25px"><h3 class="section-title">Task Progress</h3><div class="progress"><span id="taskProgress" style="width:0%"></span></div><p class="muted" id="taskProgressText">0% completed</p></div>
+</div>
+</div>
+</section>
+
+<section class="page" id="tasks">
+<div class="actions" style="margin-bottom:17px"><button class="btn" onclick="openTaskModal()">+ Add New Task</button><select class="field" style="width:auto;margin:0" id="taskFilter" onchange="renderTasks()"><option value="all">All Tasks</option><option value="pending">Pending</option><option value="done">Completed</option></select></div>
+<div class="card"><div id="taskList"></div></div>
+</section>
+
+<section class="page" id="attendance">
+<div class="grid">
+<div class="card"><div class="stat-label">OVERALL ATTENDANCE</div><div class="stat-value" id="attendancePercent">0%</div></div>
+<div class="card"><div class="stat-label">PRESENT</div><div class="stat-value" id="presentCount">0</div></div>
+<div class="card"><div class="stat-label">ABSENT</div><div class="stat-value" id="absentCount">0</div></div>
+<div class="card"><div class="stat-label">TOTAL CLASSES</div><div class="stat-value" id="totalClasses">0</div></div>
+</div>
+<div class="card">
+<h3 class="section-title">Mark Attendance</h3>
+<div class="form-grid">
+<div><label>Subject</label><input class="field" id="attSubject" placeholder="e.g. DBMS"></div>
+<div><label>Status</label><select class="field" id="attStatus"><option value="present">Present</option><option value="absent">Absent</option></select></div>
+</div>
+<button class="btn" onclick="addAttendance()">Save Attendance</button>
+<div id="attendanceList" style="margin-top:15px"></div>
+</div>
+</section>
+
+<section class="page" id="academics">
+<div class="card">
+<h3 class="section-title">SGPA Calculator</h3>
+<p class="muted">Enter subject credits and grade points.</p>
+<div class="form-grid">
+<div><label>Subject</label><input id="sgSubject" class="field" placeholder="Subject name"></div>
+<div><label>Credits</label><input id="sgCredits" class="field" type="number" min="1" placeholder="4"></div>
+<div><label>Grade Points</label><input id="sgGrade" class="field" type="number" min="0" max="10" placeholder="9"></div>
+</div>
+<button class="btn" onclick="addGrade()">Add Subject</button>
+<div id="gradeList"></div>
+<h2 style="margin-top:20px">SGPA: <span id="sgpaResult">0.00</span></h2>
+</div>
+</section>
+
+<section class="page" id="timetable">
+<div class="card"><h3 class="section-title">Weekly Timetable</h3>
+<div class="form-grid">
+<div><label>Day</label><select id="ttDay" class="field"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+<div><label>Time</label><input id="ttTime" class="field" type="time"></div>
+<div><label>Subject</label><input id="ttSubject" class="field" placeholder="Subject"></div>
+<div><label>Room</label><input id="ttRoom" class="field" placeholder="Room number"></div>
+</div>
+<button class="btn" onclick="addTimetable()">Add Class</button>
+<div id="timetableList" style="margin-top:15px"></div>
+</div>
+</section>
+
+<section class="page" id="pomodoro">
+<div class="card center">
+<h3 class="section-title">Focus Mode</h3>
+<p class="muted">Stay focused. One session at a time.</p>
+<div class="timer" id="timerDisplay">25:00</div>
+<div class="actions" style="justify-content:center">
+<button class="btn" onclick="startTimer()">Start</button>
+<button class="btn secondary" onclick="pauseTimer()">Pause</button>
+<button class="btn danger" onclick="resetTimer()">Reset</button>
+</div>
+<div style="margin:25px auto;max-width:240px">
+<label>Session duration (minutes)</label>
+<input class="field" type="number" id="timerMinutes" value="25" min="1" max="180">
+</div>
+<p class="muted" id="timerStatus">Ready to focus?</p>
+</div>
+</section>
+
+<section class="page" id="notes">
+<div class="actions" style="margin-bottom:15px"><button class="btn" onclick="openNoteModal()">+ Create Note</button></div>
+<div class="grid" id="notesList"></div>
+</section>
+
+<section class="page" id="expenses">
+<div class="grid">
+<div class="card"><div class="stat-label">TOTAL SPENDING</div><div class="stat-value" id="expenseTotal">₹0</div></div>
+<div class="card"><div class="stat-label">MONTHLY BUDGET</div><div class="stat-value" id="budgetValue">₹0</div></div>
+<div class="card"><div class="stat-label">REMAINING</div><div class="stat-value" id="remainingBudget">₹0</div></div>
+</div>
+<div class="card" style="margin-bottom:16px">
+<h3 class="section-title">Monthly Budget</h3>
+<div class="form-grid">
+  <div><label>Set monthly budget (₹)</label><input id="budgetInput" class="field" type="number" min="0" step="1" placeholder="10000"></div>
+  <div style="display:flex;align-items:end"><button class="btn" onclick="saveBudget()">Save Budget</button></div>
+</div>
+<p class="muted">Your budget is saved in this browser and used to calculate the remaining amount.</p>
+</div>
+<div class="card">
+<h3 class="section-title">Add Expense</h3>
+<div class="form-grid">
+<div><label>Title</label><input id="expTitle" class="field" placeholder="Food, travel..."></div>
+<div><label>Amount (₹)</label><input id="expAmount" class="field" type="number" min="0"></div>
+<div><label>Category</label><select id="expCategory" class="field"><option>Food</option><option>Travel</option><option>Education</option><option>Shopping</option><option>Other</option></select></div>
+<div><label>Date</label><input id="expDate" class="field" type="date"></div>
+</div>
+<button class="btn" onclick="addExpense()">Add Expense</button>
+<div id="expenseList" style="margin-top:15px"></div>
+</div>
+</section>
+
+<section class="page" id="exams">
+<div class="card">
+<h3 class="section-title">Exam Planner & Syllabus Tracker</h3>
+<div class="form-grid">
+<div><label>Subject</label><input id="examSubject" class="field" placeholder="DBMS"></div>
+<div><label>Exam Date</label><input id="examDate" class="field" type="date"></div>
+<div><label>Total Units</label><input id="examUnits" class="field" type="number" min="1" value="5"></div>
+</div>
+<button class="btn" onclick="addExam()">Add Exam</button>
+<div id="examList" style="margin-top:15px"></div>
+</div>
+</section>
+
+<section class="page" id="analytics">
+<div class="two-col">
+<div class="card"><h3 class="section-title">Task Analytics</h3><canvas id="taskChart"></canvas></div>
+<div class="card"><h3 class="section-title">Expense Analytics</h3><canvas id="expenseChart"></canvas></div>
+</div>
+</section>
+
+<section class="page" id="globalConnect">
+  <div class="card">
+    <h3 class="section-title">🌍 Global Connect</h3>
+    <p class="muted">Discover learners, chat privately and join study communities.</p>
+    <div id="gcConnectionStatus" class="item" role="status"><span>Connecting securely…</span><span class="tag">Connecting</span></div>
+    <div class="gc-grid" style="margin-top:16px">
+      <div class="card gc-panel">
+        <h3 class="section-title">🙋 Your student profile</h3>
+        <label>Display name *</label><input id="gcName" class="field" maxlength="32" placeholder="e.g. Rahul">
+        <label>Course</label><input id="gcCourse" class="field" maxlength="60" placeholder="B.Tech CSE">
+        <label>Country</label><input id="gcCountry" class="field" maxlength="40" placeholder="India">
+        <label>Interests</label><input id="gcInterests" class="field" maxlength="120" placeholder="DSA, AI/ML, Web Dev">
+        <label>College (optional)</label><input id="gcCollege" class="field" maxlength="80" placeholder="College name">
+        <label class="gc-check"><input id="gcDiscoverable" type="checkbox" checked> Show my profile to other students</label>
+        <button class="btn" id="gcSaveProfile" onclick="gcSaveProfile()">Save profile</button>
+        <p class="muted gc-note">Use a display name. Avoid sharing phone numbers, passwords or private information.</p>
+      </div>
+      <div class="card gc-panel">
+        <h3 class="section-title">🔎 Find students</h3>
+        <input id="gcSearch" class="field" placeholder="Search name, course or interests" oninput="gcRenderStudents()">
+        <div id="gcStudents" class="gc-list"><p class="muted">Save your profile and connect to discover students.</p></div>
+      </div>
+    </div>
+    <div class="gc-grid" style="margin-top:16px">
+      <div class="card gc-panel" style="margin-top:16px">
+        <h3 class="section-title">🎓 AKTU Subject Communities · 2026–27</h3>
+        <p class="muted">Choose your course, branch, year and semester to find or request a subject discussion group.</p>
+        <label>Course</label>
+        <select id="gcCourseSelect" class="field" onchange="gcUpdateSubjectOptions()">
+          <option value="B.Tech">B.Tech</option><option value="B.Pharm">B.Pharm</option>
+          <option value="MBA">MBA</option><option value="MCA">MCA</option>
+          <option value="M.Tech">M.Tech</option><option value="M.Pharm">M.Pharm</option>
+          <option value="B.Arch">B.Arch</option><option value="BHMCT">BHMCT</option>
+        </select>
+        <label>Branch / Specialization</label>
+        <input id="gcBranchSelect" class="field" maxlength="70" placeholder="e.g. CSE, IT, Mechanical, Pharmaceutics">
+        <label>Year (semester ke according auto-select)</label>
+        <select id="gcYearSelect" class="field" disabled>
+          <option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option>
+        </select>
+        <label>Semester</label>
+        <select id="gcSemesterSelect" class="field">
+          <option>Semester 1</option><option>Semester 2</option><option>Semester 3</option><option>Semester 4</option>
+          <option>Semester 5</option><option>Semester 6</option><option>Semester 7</option><option>Semester 8</option>
+        </select>
+        <label>Subject</label>
+        <input id="gcSubjectSelect" class="field" maxlength="100" list="gcSubjectSuggestions" placeholder="Type or select a subject">
+        <datalist id="gcSubjectSuggestions"></datalist>
+        <button class="btn" style="margin-top:12px" onclick="gcRequestSubjectGroup()">Find / Request subject group</button>
+        <p class="muted gc-note" id="gcSubjectStatus">Subject catalogue will show verified subjects where available. You can type your exact subject name if it is not listed.</p>
+      </div>
+      <div class="card gc-panel">
+        <h3 class="section-title">👥 Study communities</h3>
+        <div id="gcGroups" class="gc-list"></div>
+      </div>
+      <div class="card gc-panel">
+        <h3 class="section-title">💬 Messages</h3>
+        <div id="gcChatHeading" class="muted">Choose a student or community to start.</div>
+        <div id="gcMessages" class="gc-messages"></div>
+        <div class="gc-compose"><input id="gcMessageInput" class="field" maxlength="1500" placeholder="Write a message…" disabled><button class="btn" id="gcSend" onclick="gcSendMessage()" disabled>Send</button></div>
+      </div>
+    </div>
+    <p class="muted gc-note" style="margin-top:14px">Your tasks, attendance, grades, notes and expenses remain on this device. Global Connect only stores the profile and messages you choose to submit. Image sharing is not enabled in this free-plan version.</p>
+  </div>
+</section>
+
+<section class="page" id="settings">
+<div class="card">
+<h3 class="section-title">Profile Settings</h3>
+<label>Your Name</label><input id="profileName" class="field" placeholder="Student name">
+<label>College</label><input id="profileCollege" class="field" placeholder="College name">
+<label>Course</label><input id="profileCourse" class="field" placeholder="B.Tech CSE">
+<button class="btn" onclick="saveProfile()">Save Profile</button>
+<hr style="border-color:var(--border);margin:22px 0">
+<h3 class="section-title">Data Backup</h3>
+<div class="actions">
+<button class="btn secondary" onclick="exportData()">Export Backup</button>
+<button class="btn secondary" onclick="document.getElementById('importFile').click()">Import Backup</button>
+<input id="importFile" type="file" accept=".json" hidden onchange="importData(event)">
+<button class="btn danger" onclick="clearAllData()">Clear All Data</button>
+</div>
+<p class="muted">Your information is stored locally in this browser.</p>
+</div>
+</section>
+</main>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-box">
+<div class="modal-head"><h3 id="modalTitle">Add Item</h3><button class="close" onclick="closeModal()">×</button></div>
+<div id="modalContent"></div>
+</div>
+</div>
+<script>
+    // ==========================================
+// STUDENT LIFE OS - PART 2
+// DATABASE, NAVIGATION, DASHBOARD, TASKS
+// ==========================================
+
+// LOCAL STORAGE DATABASE
+const DB_KEY = "studentLifeOS_v1";
+
+const emptyDB = () => ({
+  profile: { name: "Student", college: "", course: "B.Tech CSE" },
+  tasks: [], attendance: [], grades: [], timetable: [],
+  notes: [], expenses: [], exams: []
+});
+let db;
+try {
+  const stored = JSON.parse(localStorage.getItem(DB_KEY) || "null");
+  db = stored && typeof stored === "object" ? { ...emptyDB(), ...stored } : emptyDB();
+  ["tasks", "attendance", "grades", "timetable", "notes", "expenses", "exams"]
+    .forEach(key => { if (!Array.isArray(db[key])) db[key] = []; });
+  if (!db.profile || typeof db.profile !== "object") db.profile = emptyDB().profile;
+} catch (error) {
+  console.warn("Stored Student Life OS data was unreadable. Starting with empty data.", error);
+  db = emptyDB();
+}
+
+function saveDB() {
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  updateDashboard();
+}
+
+// SAFE HTML TEXT
+function safe(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+// DATE SETUP
+document.getElementById("today").textContent =
+  new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+document.getElementById("expDate").value =
+  new Date().toISOString().split("T")[0];
+
+// NAVIGATION
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.remove("active");
+  });
+
+  document.querySelectorAll(".nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.page === page);
+  });
+
+  const selected = document.getElementById(page);
+
+  if (!selected) return;
+
+  selected.classList.add("active");
+
+  const titles = {
+    dashboard: "Dashboard",
+    tasks: "Tasks & To-do",
+    attendance: "Attendance",
+    academics: "Academics & SGPA",
+    timetable: "Timetable",
+    pomodoro: "Focus Timer",
+    notes: "My Notes",
+    expenses: "Expenses",
+    exams: "Exam Planner",
+    analytics: "Analytics",
+    settings: "Settings",
+     globalConnect: "Global Connect"
+  };
+
+  document.getElementById("pageTitle").textContent =
+    titles[page] || "Student Life OS";
+
+  document.getElementById("sidebar").classList.remove("open");
+
+  if (page === "analytics") renderCharts();
+  if (page === "attendance") renderAttendance();
+  if (page === "academics") renderGrades();
+  if (page === "timetable") renderTimetable();
+  if (page === "notes") renderNotes();
+  if (page === "expenses") renderExpenses();
+  if (page === "exams") renderExams();
+}
+
+document.querySelectorAll(".nav button").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.page);
+  });
+});
+
+// MODAL SYSTEM
+function openModal(title, content) {
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalContent").innerHTML = content;
+  document.getElementById("modal").classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.remove("show");
+}
+
+// DASHBOARD
+function updateDashboard() {
+  const total = db.tasks.length;
+  const done = db.tasks.filter(t => t.done).length;
+
+  const present = db.attendance.filter(a =>
+    a.status === "present"
+  ).length;
+
+  const totalAttendance = db.attendance.length;
+
+  const attendancePercent = totalAttendance
+    ? Math.round((present / totalAttendance) * 100)
+    : 0;
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const expense = db.expenses
+    .filter(e => String(e.date || "").slice(0, 7) === currentMonth)
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+  document.getElementById("totalTasks").textContent = total;
+  document.getElementById("doneTasks").textContent = done;
+
+  document.getElementById("dashAttendance").textContent =
+    attendancePercent + "%";
+
+  document.getElementById("dashExpense").textContent =
+    "₹" + expense.toLocaleString("en-IN");
+
+  const progress = total
+    ? Math.round((done / total) * 100)
+    : 0;
+
+  document.getElementById("taskProgress").style.width =
+    progress + "%";
+
+  document.getElementById("taskProgressText").textContent =
+    progress + "% completed";
+
+  document.getElementById("presentCount").textContent = present;
+  document.getElementById("absentCount").textContent =
+    totalAttendance - present;
+
+  document.getElementById("totalClasses").textContent =
+    totalAttendance;
+
+  document.getElementById("attendancePercent").textContent =
+    attendancePercent + "%";
+
+  renderDashboardTasks();
+  renderTasks();
+}
+
+// TASK MANAGEMENT
+function openTaskModal() {
+  openModal("Create New Task", `
+    <label>Task Title</label>
+    <input id="newTaskTitle" class="field"
+      placeholder="Complete DBMS assignment">
+
+    <label>Subject / Category</label>
+    <input id="newTaskSubject" class="field"
+      placeholder="DBMS">
+
+    <label>Due Date</label>
+    <input id="newTaskDate" class="field" type="date">
+
+    <label>Priority</label>
+    <select id="newTaskPriority" class="field">
+      <option>Low</option>
+      <option selected>Medium</option>
+      <option>High</option>
+    </select>
+
+    <button class="btn" onclick="addTask()">
+      Create Task
+    </button>
+  `);
+}
+
+function addTask() {
+  const title = document.getElementById("newTaskTitle").value.trim();
+
+  if (!title) {
+    alert("Please enter task title");
+    return;
+  }
+
+  db.tasks.push({
+    id: Date.now(),
+    title,
+    subject: document.getElementById("newTaskSubject").value,
+    date: document.getElementById("newTaskDate").value,
+    priority: document.getElementById("newTaskPriority").value,
+    done: false,
+    createdAt: new Date().toISOString()
+  });
+
+  saveDB();
+  closeModal();
+}
+
+function toggleTask(id) {
+  const task = db.tasks.find(t => t.id === id);
+
+  if (!task) return;
+
+  task.done = !task.done;
+  saveDB();
+}
+
+function deleteTask(id) {
+  if (!confirm("Delete this task?")) return;
+
+  db.tasks = db.tasks.filter(t => t.id !== id);
+  saveDB();
+}
+
+function renderTasks() {
+  const container = document.getElementById("taskList");
+
+  if (!container) return;
+
+  const filter = document.getElementById("taskFilter")?.value || "all";
+
+  let tasks = [...db.tasks];
+
+  if (filter === "pending") {
+    tasks = tasks.filter(t => !t.done);
+  }
+
+  if (filter === "done") {
+    tasks = tasks.filter(t => t.done);
+  }
+
+  tasks.sort((a, b) => {
+    return Number(a.done) - Number(b.done);
+  });
+
+  if (!tasks.length) {
+    container.innerHTML = '<p class="empty">No tasks found. Add your first task!</p>';
+    return;
+  }
+
+  container.innerHTML = tasks.map(task => `
+    <div class="item">
+      <div style="min-width:0">
+        <div style="${task.done ? "text-decoration:line-through;opacity:.5" : ""}">
+          <strong>${safe(task.title)}</strong>
+        </div>
+        <div class="muted">
+          ${safe(task.subject || "General")}
+          · ${safe(task.date || "No deadline")}
+        </div>
+        <span class="tag">${safe(task.priority)}</span>
+      </div>
+      <div class="actions">
+        <button class="btn small secondary"
+          onclick="toggleTask(${task.id})">
+          ${task.done ? "Undo" : "Done"}
+        </button>
+        <button class="btn small danger"
+          onclick="deleteTask(${task.id})">×</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderDashboardTasks() {
+  const container = document.getElementById("dashboardTasks");
+
+  if (!container) return;
+
+  const pending = db.tasks.filter(t => !t.done).slice(0, 5);
+
+  if (!pending.length) {
+    container.innerHTML =
+      '<p class="empty">All caught up! Add a new task.</p>';
+    return;
+  }
+
+  container.innerHTML = pending.map(task => `
+    <div class="item">
+      <div>
+        <strong>${safe(task.title)}</strong>
+        <p class="muted">${safe(task.date || "No deadline")}</p>
+      </div>
+      <button class="btn small secondary"
+        onclick="toggleTask(${task.id})">Done</button>
+    </div>
+  `).join("");
+}
+
+// ATTENDANCE MANAGEMENT
+function addAttendance() {
+  const subject = document.getElementById("attSubject").value.trim();
+
+  if (!subject) {
+    alert("Enter subject name");
+    return;
+  }
+
+  db.attendance.push({
+    id: Date.now(),
+    subject,
+    status: document.getElementById("attStatus").value,
+    date: new Date().toISOString().split("T")[0]
+  });
+
+  document.getElementById("attSubject").value = "";
+
+  saveDB();
+  renderAttendance();
+}
+
+function deleteAttendance(id) {
+  if (!confirm("Delete attendance record?")) return;
+
+  db.attendance = db.attendance.filter(a => a.id !== id);
+
+  saveDB();
+  renderAttendance();
+}
+
+function renderAttendance() {
+  const container = document.getElementById("attendanceList");
+
+  if (!container) return;
+
+  const grouped = {};
+
+  db.attendance.forEach(record => {
+    if (!grouped[record.subject]) {
+      grouped[record.subject] = {
+        present: 0,
+        total: 0
+      };
+    }
+
+    grouped[record.subject].total++;
+
+    if (record.status === "present") {
+      grouped[record.subject].present++;
+    }
+  });
+
+  const summary = Object.entries(grouped).map(([name, data]) => {
+    const percent = Math.round(
+      (data.present / data.total) * 100
+    );
+
+    return `
+      <div class="item">
+        <div style="flex:1">
+          <strong>${safe(name)}</strong>
+          <p class="muted">
+            ${data.present}/${data.total} classes · ${percent}%
+          </p>
+          <div class="progress">
+            <span style="width:${percent}%"></span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const records = [...db.attendance]
+    .reverse()
+    .map(record => `
+      <div class="item">
+        <div>
+          <strong>${safe(record.subject)}</strong>
+          <p class="muted">${safe(record.date)}</p>
+        </div>
+        <div class="actions">
+          <span class="tag"
+            style="${record.status === "present"
+              ? "background:#123d35;color:#65e4ba"
+              : "background:#492235;color:#ff91ad"}">
+            ${record.status.toUpperCase()}
+          </span>
+          <button class="btn small danger"
+            onclick="deleteAttendance(${record.id})">×</button>
+        </div>
+      </div>
+    `).join("");
+
+  container.innerHTML = `
+    <h3 class="section-title">Subject Summary</h3>
+    ${summary || '<p class="empty">No attendance records yet.</p>'}
+    <h3 class="section-title" style="margin-top:20px">Recent Records</h3>
+    ${records || '<p class="empty">No records found.</p>'}
+  `;
+}
+// ==========================================
+// STUDENT LIFE OS - PART 3
+// ==========================================
+
+// 1. SGPA CALCULATOR
+
+function addGrade() {
+  const subject = document.getElementById("sgSubject").value.trim();
+  const credits = Number(document.getElementById("sgCredits").value);
+  const grade = Number(document.getElementById("sgGrade").value);
+
+  if (!subject || !Number.isFinite(credits) || credits <= 0 ||
+      !Number.isFinite(grade) || grade < 0 || grade > 10) {
+    alert("Enter valid subject, credits and grade points (0-10).");
+    return;
+  }
+
+  db.grades.push({
+    id: Date.now(),
+    subject,
+    credits,
+    grade
+  });
+
+  document.getElementById("sgSubject").value = "";
+  document.getElementById("sgCredits").value = "";
+  document.getElementById("sgGrade").value = "";
+
+  saveDB();
+  renderGrades();
+}
+
+function deleteGrade(id) {
+  if (!confirm("Delete this subject?")) return;
+
+  db.grades = db.grades.filter(g => g.id !== id);
+  saveDB();
+  renderGrades();
+}
+
+function renderGrades() {
+  const container = document.getElementById("gradeList");
+
+  if (!container) return;
+
+  if (!db.grades.length) {
+    container.innerHTML = '<p class="empty">Add subjects to calculate SGPA.</p>';
+    document.getElementById("sgpaResult").textContent = "0.00";
+    return;
+  }
+
+  let totalCredits = 0;
+  let weightedPoints = 0;
+
+  container.innerHTML = db.grades.map(g => {
+    totalCredits += Number(g.credits);
+    weightedPoints += Number(g.credits) * Number(g.grade);
+
+    return `
+      <div class="item">
+        <div>
+          <strong>${safe(g.subject)}</strong>
+          <p class="muted">
+            Credits: ${g.credits} · Grade: ${g.grade}
+          </p>
+        </div>
+        <button class="btn small danger"
+          onclick="deleteGrade(${g.id})">×</button>
+      </div>
+    `;
+  }).join("");
+
+  const sgpa = totalCredits
+    ? weightedPoints / totalCredits
+    : 0;
+
+  document.getElementById("sgpaResult").textContent =
+    sgpa.toFixed(2);
+}
+
+
+// 2. WEEKLY TIMETABLE
+
+function addTimetable() {
+  const day = document.getElementById("ttDay").value;
+  const time = document.getElementById("ttTime").value;
+  const subject = document.getElementById("ttSubject").value.trim();
+  const room = document.getElementById("ttRoom").value.trim();
+
+  if (!time || !subject) {
+    alert("Please enter class time and subject.");
+    return;
+  }
+
+  db.timetable.push({
+    id: Date.now(),
+    day,
+    time,
+    subject,
+    room
+  });
+
+  document.getElementById("ttSubject").value = "";
+  document.getElementById("ttRoom").value = "";
+
+  saveDB();
+  renderTimetable();
+}
+
+function deleteTimetable(id) {
+  if (!confirm("Delete this class?")) return;
+
+  db.timetable = db.timetable.filter(t => t.id !== id);
+  saveDB();
+  renderTimetable();
+}
+
+function renderTimetable() {
+  const container = document.getElementById("timetableList");
+
+  if (!container) return;
+
+  const days = [
+    "Monday", "Tuesday", "Wednesday",
+    "Thursday", "Friday", "Saturday", "Sunday"
+  ];
+
+  const sorted = [...db.timetable].sort((a, b) => {
+    const dayDifference = days.indexOf(a.day) - days.indexOf(b.day);
+    return dayDifference || a.time.localeCompare(b.time);
+  });
+
+  if (!sorted.length) {
+    container.innerHTML =
+      '<p class="empty">Your timetable is empty.</p>';
+    return;
+  }
+
+  container.innerHTML = sorted.map(t => `
+    <div class="item">
+      <div>
+        <strong>${safe(t.subject)}</strong>
+        <p class="muted">
+          ${safe(t.day)} · ${safe(t.time)}
+          ${t.room ? " · Room " + safe(t.room) : ""}
+        </p>
+      </div>
+      <button class="btn small danger"
+        onclick="deleteTimetable(${t.id})">×</button>
+    </div>
+  `).join("");
+}
+
+
+// 3. POMODORO FOCUS TIMER
+
+let timerSeconds = 25 * 60;
+let timerInterval = null;
+let timerRunning = false;
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timerSeconds / 60);
+  const seconds = timerSeconds % 60;
+
+  document.getElementById("timerDisplay").textContent =
+    String(minutes).padStart(2, "0") + ":" +
+    String(seconds).padStart(2, "0");
+}
+
+function startTimer() {
+  if (timerRunning) return;
+
+  if (timerSeconds <= 0) {
+    resetTimer();
+  }
+
+  timerRunning = true;
+  document.getElementById("timerStatus").textContent =
+    "Focus session running. Stay productive!";
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+
+    updateTimerDisplay();
+
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerRunning = false;
+
+      document.getElementById("timerStatus").textContent =
+        "Session completed! Take a short break.";
+
+      alert("Focus session completed! Great work!");
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+
+  document.getElementById("timerStatus").textContent =
+    "Timer paused.";
+}
+
+function resetTimer() {
+  pauseTimer();
+
+  let minutes = Number(
+    document.getElementById("timerMinutes").value
+  );
+
+  if (!Number.isFinite(minutes) || minutes < 1 || minutes > 180) {
+    minutes = 25;
+    document.getElementById("timerMinutes").value = 25;
+  }
+
+  timerSeconds = Math.floor(minutes) * 60;
+
+  updateTimerDisplay();
+
+  document.getElementById("timerStatus").textContent =
+    "Ready for a new session?";
+}
+
+document.getElementById("timerMinutes").addEventListener(
+  "change",
+  resetTimer
+);
+
+updateTimerDisplay();
+
+
+// 4. NOTES MANAGER
+
+function openNoteModal() {
+  openModal("Create New Note", `
+    <label>Note Title</label>
+    <input id="noteTitle" class="field"
+      placeholder="DBMS Important Questions">
+
+    <label>Note Content</label>
+    <textarea id="noteContent" class="field"
+      rows="7" placeholder="Write your notes here..."></textarea>
+
+    <label>Category</label>
+    <select id="noteCategory" class="field">
+      <option>Study</option>
+      <option>Personal</option>
+      <option>Ideas</option>
+      <option>Important</option>
+    </select>
+
+    <button class="btn" onclick="addNote()">Save Note</button>
+  `);
+}
+
+function addNote() {
+  const title = document.getElementById("noteTitle").value.trim();
+  const content = document.getElementById("noteContent").value.trim();
+  const category = document.getElementById("noteCategory").value;
+
+  if (!title || !content) {
+    alert("Enter note title and content.");
+    return;
+  }
+
+  db.notes.push({
+    id: Date.now(),
+    title,
+    content,
+    category,
+    date: new Date().toLocaleDateString("en-IN")
+  });
+
+  saveDB();
+  closeModal();
+  renderNotes();
+}
+
+function deleteNote(id) {
+  if (!confirm("Delete this note?")) return;
+
+  db.notes = db.notes.filter(n => n.id !== id);
+  saveDB();
+  renderNotes();
+}
+
+function renderNotes() {
+  const container = document.getElementById("notesList");
+
+  if (!container) return;
+
+  if (!db.notes.length) {
+    container.innerHTML =
+      '<div class="card"><p class="empty">No notes created yet.</p></div>';
+    return;
+  }
+
+  container.innerHTML = [...db.notes].reverse().map(n => `
+    <div class="card">
+      <span class="tag">${safe(n.category)}</span>
+      <h3 style="margin-top:14px">${safe(n.title)}</h3>
+      <p class="muted">${safe(n.date)}</p>
+      <p style="margin-top:14px;white-space:pre-wrap;overflow-wrap:anywhere">${safe(n.content)}</p>
+      <button class="btn small danger"
+        style="margin-top:15px"
+        onclick="deleteNote(${n.id})">Delete Note</button>
+    </div>
+  `).join("");
+}
+
+
+// 5. EXPENSE TRACKER
+
+function addExpense() {
+  const title = document.getElementById("expTitle").value.trim();
+  const amount = Number(document.getElementById("expAmount").value);
+  const category = document.getElementById("expCategory").value;
+  const date = document.getElementById("expDate").value;
+
+  if (!title || !Number.isFinite(amount) || amount <= 0 || !date) {
+    alert("Enter valid expense details.");
+    return;
+  }
+
+  db.expenses.push({
+    id: Date.now(),
+    title,
+    amount,
+    category,
+    date
+  });
+
+  document.getElementById("expTitle").value = "";
+  document.getElementById("expAmount").value = "";
+
+  saveDB();
+  renderExpenses();
+}
+
+function deleteExpense(id) {
+  if (!confirm("Delete this expense?")) return;
+
+  db.expenses = db.expenses.filter(e => e.id !== id);
+  saveDB();
+  renderExpenses();
+}
+
+function saveBudget() {
+  const input = document.getElementById("budgetInput");
+  const budget = Number(input.value);
+  if (input.value.trim() === "" || !Number.isFinite(budget) || budget < 0) {
+    alert("Please enter a valid monthly budget (0 or more).");
+    return;
+  }
+  localStorage.setItem("studentOSBudget", String(budget));
+  renderExpenses();
+  alert("Monthly budget saved!");
+}
+
+function renderExpenses() {
+  const container = document.getElementById("expenseList");
+  if (!container) return;
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthlyExpenses = db.expenses.filter(e => String(e.date || "").slice(0, 7) === currentMonth);
+  const monthlyTotal = monthlyExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const allTimeTotal = db.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const budget = Number(localStorage.getItem("studentOSBudget") ?? 10000);
+
+  document.getElementById("expenseTotal").textContent = "₹" + monthlyTotal.toLocaleString("en-IN");
+  document.getElementById("budgetValue").textContent = "₹" + budget.toLocaleString("en-IN");
+  document.getElementById("remainingBudget").textContent = "₹" + (budget - monthlyTotal).toLocaleString("en-IN");
+
+  const budgetInput = document.getElementById("budgetInput");
+  if (budgetInput && document.activeElement !== budgetInput) budgetInput.value = String(budget);
+
+  if (!db.expenses.length) {
+    container.innerHTML = '<p class="empty">No expenses recorded yet. Add your first expense above.</p>';
+    return;
+  }
+  container.innerHTML = `
+    <div class="item">
+      <div><strong>All-time spending</strong><p class="muted">${db.expenses.length} expense record(s)</p></div>
+      <strong style="font-size:18px;color:var(--green)">₹${allTimeTotal.toLocaleString("en-IN")}</strong>
+    </div>
+    <h3 class="section-title" style="margin-top:18px">Expense History</h3>
+    ${[...db.expenses].sort((a,b) => String(b.date).localeCompare(String(a.date))).map(e => `
+      <div class="item">
+        <div style="min-width:0">
+          <strong>${safe(e.title)}</strong>
+          <p class="muted">${safe(e.category)} · ${safe(e.date)}</p>
+        </div>
+        <div class="actions">
+          <strong style="font-size:16px;white-space:nowrap;color:var(--green)">₹${Number(e.amount || 0).toLocaleString("en-IN")}</strong>
+          <button class="btn small danger" onclick="deleteExpense(${Number(e.id)})" aria-label="Delete expense">×</button>
+        </div>
+      </div>
+    `).join("")}
+  `;
+}
+
+
+// 6. EXAM PLANNER + SYLLABUS TRACKER
+
+function addExam() {
+  const subject = document.getElementById("examSubject").value.trim();
+  const date = document.getElementById("examDate").value;
+  const units = Number(document.getElementById("examUnits").value);
+
+  if (!subject || !date || !Number.isInteger(units) ||
+      units < 1 || units > 30) {
+    alert("Enter valid exam details and number of units.");
+    return;
+  }
+
+  db.exams.push({
+    id: Date.now(),
+    subject,
+    date,
+    units,
+    completed: []
+  });
+
+  document.getElementById("examSubject").value = "";
+
+  saveDB();
+  renderExams();
+}
+
+function toggleUnit(examId, unit) {
+  const exam = db.exams.find(e => e.id === examId);
+
+  if (!exam) return;
+
+  if (!Array.isArray(exam.completed)) {
+    exam.completed = [];
+  }
+
+  if (exam.completed.includes(unit)) {
+    exam.completed = exam.completed.filter(u => u !== unit);
+  } else {
+    exam.completed.push(unit);
+  }
+
+  saveDB();
+  renderExams();
+}
+
+function deleteExam(id) {
+  if (!confirm("Delete this exam?")) return;
+
+  db.exams = db.exams.filter(e => e.id !== id);
+  saveDB();
+  renderExams();
+}
+
+function renderExams() {
+  const container = document.getElementById("examList");
+
+  if (!container) return;
+
+  if (!db.exams.length) {
+    container.innerHTML =
+      '<p class="empty">No exams added yet.</p>';
+    return;
+  }
+
+  container.innerHTML = [...db.exams]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(exam => {
+      const completed = Array.isArray(exam.completed)
+        ? exam.completed
+        : [];
+
+      const percentage = Math.round(
+        (completed.length / exam.units) * 100
+      );
+
+      return `
+        <div class="card" style="margin-top:15px">
+          <div class="item">
+            <div>
+              <h3>${safe(exam.subject)}</h3>
+              <p class="muted">
+                Exam date: ${safe(exam.date)}
+              </p>
+            </div>
+            <button class="btn small danger"
+              onclick="deleteExam(${exam.id})">Delete</button>
+          </div>
+
+          <p class="muted">
+            Syllabus: ${completed.length}/${exam.units} units completed
+          </p>
+
+          <div class="progress">
+            <span style="width:${percentage}%"></span>
+          </div>
+
+          <div class="actions" style="margin-top:15px">
+            ${Array.from({length: exam.units}, (_, i) => {
+              const unit = i + 1;
+              const done = completed.includes(unit);
+
+              return `
+                <button class="btn small ${done ? "" : "secondary"}"
+                  onclick="toggleUnit(${exam.id}, ${unit})">
+                  ${done ? "✓ " : ""}Unit ${unit}
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }).join("");
+}
+// ==========================================
+// STUDENT LIFE OS - PART 4
+// ANALYTICS, PROFILE, BACKUP, FINAL SETUP
+// ==========================================
+
+// 1. ANALYTICS CHARTS
+
+let taskChartInstance = null;
+let expenseChartInstance = null;
+
+function renderCharts() {
+  const taskCanvas = document.getElementById("taskChart");
+  const expenseCanvas = document.getElementById("expenseChart");
+
+  if (!taskCanvas || !expenseCanvas) return;
+
+  if (typeof Chart === "undefined") {
+    taskCanvas.parentElement.innerHTML +=
+      "<p class='muted'>Charts unavailable. Check your internet connection.</p>";
+    return;
+  }
+
+  if (taskChartInstance) {
+    taskChartInstance.destroy();
+  }
+
+  if (expenseChartInstance) {
+    expenseChartInstance.destroy();
+  }
+
+  const completed = db.tasks.filter(t => t.done).length;
+  const pending = db.tasks.length - completed;
+
+  taskChartInstance = new Chart(taskCanvas, {
+    type: "doughnut",
+    data: {
+      labels: ["Completed", "Pending"],
+      datasets: [{
+        data: [completed, pending],
+        backgroundColor: ["#35d39a", "#8b7cff"],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: "#f3f6ff" }
+        }
+      }
+    }
+  });
+
+  const categories = {};
+
+  db.expenses.forEach(e => {
+    categories[e.category] =
+      (categories[e.category] || 0) + Number(e.amount);
+  });
+
+  expenseChartInstance = new Chart(expenseCanvas, {
+    type: "bar",
+    data: {
+      labels: Object.keys(categories).length
+        ? Object.keys(categories)
+        : ["No Data"],
+      datasets: [{
+        label: "Expenses (₹)",
+        data: Object.keys(categories).length
+          ? Object.values(categories)
+          : [0],
+        backgroundColor: "#8b7cff",
+        borderRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: "#f3f6ff" }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#8994aa" },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: "#8994aa" },
+          grid: { color: "#253047" }
+        }
+      }
+    }
+  });
+}
+
+
+// 2. PROFILE SETTINGS
+
+function saveProfile() {
+  db.profile.name =
+    document.getElementById("profileName").value.trim() || "Student";
+
+  db.profile.college =
+    document.getElementById("profileCollege").value.trim();
+
+  db.profile.course =
+    document.getElementById("profileCourse").value.trim();
+
+  saveDB();
+  updateProfileUI();
+
+  alert("Profile saved successfully!");
+}
+
+function updateProfileUI() {
+  const profile = db.profile || {};
+
+  document.getElementById("headerName").textContent =
+    profile.name || "Student";
+
+  document.getElementById("welcomeName").textContent =
+    profile.name || "Student";
+
+  document.getElementById("profileName").value =
+    profile.name || "";
+
+  document.getElementById("profileCollege").value =
+    profile.college || "";
+
+  document.getElementById("profileCourse").value =
+    profile.course || "B.Tech CSE";
+}
+
+
+// 3. EXPORT BACKUP
+
+function exportData() {
+  const backup = {
+    application: "Student Life OS",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: db
+  };
+
+  const file = new Blob(
+    [JSON.stringify(backup, null, 2)],
+    { type: "application/json" }
+  );
+
+  const url = URL.createObjectURL(file);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "Student_Life_OS_Backup.json";
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+
+  alert("Backup exported successfully!");
+}
+
+
+// 4. IMPORT BACKUP
+
+function importData(event) {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+
+      const imported = backup.data || backup;
+
+      const requiredArrays = [
+        "tasks",
+        "attendance",
+        "grades",
+        "timetable",
+        "notes",
+        "expenses",
+        "exams"
+      ];
+
+      if (!imported || typeof imported !== "object" ||
+          !requiredArrays.every(key => Array.isArray(imported[key]))) {
+        throw new Error("Invalid backup structure");
+      }
+
+      if (!confirm("This will replace your current app data. Continue?")) {
+        return;
+      }
+
+      db = {
+        profile: imported.profile || {
+          name: "Student",
+          college: "",
+          course: "B.Tech CSE"
+        },
+        tasks: imported.tasks,
+        attendance: imported.attendance,
+        grades: imported.grades,
+        timetable: imported.timetable,
+        notes: imported.notes,
+        expenses: imported.expenses,
+        exams: imported.exams
+      };
+
+      saveDB();
+      updateProfileUI();
+      renderAttendance();
+      renderGrades();
+      renderTimetable();
+      renderNotes();
+      renderExpenses();
+      renderExams();
+
+      alert("Backup restored successfully!");
+
+    } catch (error) {
+      alert("Invalid backup file. Please select a valid Student Life OS JSON backup.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+
+// 5. CLEAR ALL DATA
+
+function clearAllData() {
+  const confirmed = confirm(
+    "WARNING: This will permanently delete all Student Life OS data from this browser. Have you exported a backup?"
+  );
+
+  if (!confirmed) return;
+
+  localStorage.removeItem(DB_KEY);
+  localStorage.removeItem("studentOSBudget");
+
+  db = {
+    profile: {
+      name: "Student",
+      college: "",
+      course: "B.Tech CSE"
+    },
+    tasks: [],
+    attendance: [],
+    grades: [],
+    timetable: [],
+    notes: [],
+    expenses: [],
+    exams: []
+  };
+
+  saveDB();
+
+  updateProfileUI();
+  renderAttendance();
+  renderGrades();
+  renderTimetable();
+  renderNotes();
+  renderExpenses();
+  renderExams();
+
+  alert("All app data cleared.");
+}
+
+
+// GLOBAL CONNECT FIREBASE FOUNDATION
+// Fill these values from Firebase Console > Project settings > Your apps > Web app.
+const STUDENT_OS_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBKDYFzE-i5O7IS-kNl5ooSl4N9ERUraN4",
+  authDomain: "student-life-os-77841.firebaseapp.com",
+  projectId: "student-life-os-77841",
+  storageBucket: "student-life-os-77841.firebasestorage.app",
+  messagingSenderId: "1075465312288",
+  appId: "1:1075465312288:web:3a4c6c173b0cf599c78445",
+  measurementId: "G-VKJ3XPWPR7"
+};
+
+let globalConnectAuth = null;
+let globalConnectDb = null;
+
+function initializeGlobalConnectFirebase() {
+  const status = document.getElementById("gcConnectionStatus");
+  const configReady =
+    STUDENT_OS_FIREBASE_CONFIG.apiKey !== "PASTE_FIREBASE_WEB_API_KEY" &&
+    STUDENT_OS_FIREBASE_CONFIG.authDomain !== "PASTE_FIREBASE_AUTH_DOMAIN" &&
+    STUDENT_OS_FIREBASE_CONFIG.projectId !== "PASTE_FIREBASE_PROJECT_ID" &&
+    STUDENT_OS_FIREBASE_CONFIG.appId !== "PASTE_FIREBASE_WEB_APP_ID";
+
+  if (!configReady) return;
+  if (typeof firebase === "undefined") {
+    if (status) status.innerHTML = '<span>Firebase SDK could not load. Check internet connection.</span><span class="tag">Offline</span>';
+    return;
+  }
+
+  try {
+    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(STUDENT_OS_FIREBASE_CONFIG);
+    globalConnectAuth = firebase.auth(app);
+    globalConnectDb = firebase.firestore(app);
+
+    globalConnectAuth.signInAnonymously()
+      .then(async (credential) => {
+        gcCurrentUser = credential.user;
+        if (status) status.innerHTML = '<span>Anonymous student identity connected.</span><span class="tag">Connected</span>';
+        await gcLoadOwnProfile();
+        await gcLoadJoinedGroups();
+      })
+      .catch(error => {
+        console.error("Global Connect anonymous sign-in failed:", error);
+        if (status) status.innerHTML = '<span>Firebase sign-in failed. Check Firebase Authentication settings.</span><span class="tag">Error</span>';
+      });
+  } catch (error) {
+    console.error("Global Connect Firebase initialization failed:", error);
+    if (status) status.innerHTML = '<span>Firebase configuration could not be initialized.</span><span class="tag">Error</span>';
+  }
+}
+
+
+// GLOBAL CONNECT: student discovery, direct messages and study communities.
+
+const GC_BTECH_SUBJECT_CATALOG_2026 = {
+  "Semester 1": [
+    "Quantum Physics and Applications / Applied Chemistry for Smart Systems",
+    "Calculus and Linear Algebra",
+    "Fundamentals of Electrical Engineering / Fundamentals of Electronics Engineering",
+    "Programming Languages",
+    "Introduction to Indian Knowledge System / Professional Communication",
+    "Introduction to AI and Prompt Engineering / Fundamentals of Mechanical Engineering",
+    "Applied Physics Lab / Applied Chemistry Lab",
+    "Electrical Engineering Lab / Electronics Engineering Lab",
+    "CAD Lab / Innovation and Design Thinking Lab",
+    "Language Lab / Environment and Sustainability",
+    "General Proficiency"
+  ],
+  "Semester 2": [
+    "Quantum Physics and Applications / Applied Chemistry for Smart Systems",
+    "Numerical Methods",
+    "Fundamentals of Electrical Engineering / Fundamentals of Electronics Engineering",
+    "Essentials of Data Structure",
+    "Introduction to Indian Knowledge System / Professional Communication and Technical Writing",
+    "Introduction to AI and Prompt Engineering / Fundamentals of Mechanical Engineering",
+    "Applied Physics Lab / Applied Chemistry Lab",
+    "Electrical Engineering Lab / Electronics Engineering Lab",
+    "CAD Lab / Innovation and Design Thinking Lab",
+    "Language Lab / Environment and Sustainability",
+    "General Proficiency"
+  ]
+};
+function gcUpdateSubjectOptions() {
+  const course = document.getElementById("gcCourseSelect")?.value;
+  const sem = document.getElementById("gcSemesterSelect")?.value;
+  const year = document.getElementById("gcYearSelect")?.value;
+  const datalist = document.getElementById("gcSubjectSuggestions");
+  if (!datalist) return;
+  const semesterNumber = Number((sem.match(/\d+/) || [0])[0]);
+  const expectedYear = semesterNumber <= 2 ? "1st Year" : semesterNumber <= 4 ? "2nd Year" : semesterNumber <= 6 ? "3rd Year" : "4th Year";
+  const yearSelect = document.getElementById("gcYearSelect");
+  if (yearSelect && sem) yearSelect.value = expectedYear;
+  let subjects = [];
+  if (course === "B.Tech") subjects = GC_BTECH_SUBJECT_CATALOG_2026[sem] || [];
+  datalist.innerHTML = subjects.map(s => `<option value="${gcEscape(s)}"></option>`).join("");
+  const status = document.getElementById("gcSubjectStatus");
+  if (subjects.length) {
+    status.textContent = "B.Tech 2026–27 first-year starter subjects (Sem 1–2). Verify your branch/college scheme; later semesters and other courses can be entered using the exact syllabus subject name.";
+  } else {
+    status.textContent = "Is course/semester ki verified subject list abhi preloaded nahi hai. Apne college ke 2026–27 syllabus/timetable se exact subject name type karo; usi course, branch aur semester ke liye group request banegi.";
+  }
+}
+async function gcRequestSubjectGroup() {
+  const course = document.getElementById("gcCourseSelect").value;
+  const branch = document.getElementById("gcBranchSelect").value.trim();
+  const year = document.getElementById("gcYearSelect").value;
+  const semester = document.getElementById("gcSemesterSelect").value;
+  const subject = document.getElementById("gcSubjectSelect").value.trim();
+  if (!subject) return alert("Subject ka naam likho.");
+  const uid = gcCurrentUser?.uid;
+  if (!uid || !globalConnectDb) return alert("Firebase anonymous connection ready nahi hai.");
+  const key = [course, branch || "General", year, semester, subject].join("|").toLowerCase()
+    .replace(/[^a-z0-9|]+/g, "-").replace(/\|/g, "_").slice(0, 180);
+  try {
+    await globalConnectDb.collection("gcSubjectGroupRequests").doc(key).set({
+      course, branch, year, semester, subject,
+      requestedBy: uid,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true});
+    document.getElementById("gcSubjectStatus").textContent =
+      "Subject group request submitted. Secure Firestore rules and group chat provisioning are the next setup step.";
+  } catch (e) {
+    console.error("Subject group request failed", e);
+    document.getElementById("gcSubjectStatus").textContent =
+      "Request abhi save nahi hui: Firestore mein gcSubjectGroupRequests ke secure rules add karne honge.";
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const course = document.getElementById("gcCourseSelect");
+  if (course) gcUpdateSubjectOptions();
+  ["gcSemesterSelect","gcYearSelect"].forEach(id => {
+    document.getElementById(id)?.addEventListener("change", gcUpdateSubjectOptions);
+  });
+});
+
+const GC_GROUPS = [
+  ["dsa", "DSA & Problem Solving", "Data structures, algorithms and interview prep"],
+  ["webdev", "Web Development", "HTML, CSS, JavaScript and full-stack projects"],
+  ["aiml", "AI & Machine Learning", "AI, ML, data science and research"],
+  ["cyber", "Cybersecurity", "Security learning and ethical hacking"],
+  ["placements", "Placements & Careers", "Internships, resumes and interview practice"],
+  ["exams", "Competitive Exams", "GATE, university exams and study plans"],
+  ["general", "Student Lounge", "General student discussions"]
+];
+let gcCurrentUser = null;
+let gcActiveRoom = null;
+let gcMessagesUnsubscribe = null;
+let gcProfilesCache = [];
+let gcJoinedGroups = new Set();
+
+function gcStatus(message, tag) {
+  const el = document.getElementById("gcConnectionStatus");
+  if (el) el.innerHTML = `<span>${gcEscape(message)}</span><span class="tag">${gcEscape(tag)}</span>`;
+}
+function gcEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function gcGroupId(id) { return "group_" + id; }
+function gcSetChatEnabled(enabled) {
+  document.getElementById("gcMessageInput").disabled = !enabled;
+  document.getElementById("gcSend").disabled = !enabled;
+}
+function gcRenderGroups() {
+  const root = document.getElementById("gcGroups");
+  if (!root) return;
+  root.innerHTML = GC_GROUPS.map(([id,name,desc]) => {
+    const joined = gcJoinedGroups.has(id);
+    return `<div class="gc-group"><div><strong>${gcEscape(name)}</strong><small>${gcEscape(desc)} · ${joined ? "Joined" : "Not joined"}</small></div><div style="display:flex;gap:6px"><button class="btn ${joined ? "secondary" : ""}" onclick="gcToggleGroup('${id}')">${joined ? "Leave" : "Join"}</button>${joined ? `<button class="btn secondary" onclick="gcOpenGroup('${id}')">Open</button>` : ""}</div></div>`;
+  }).join("");
+}
+async function gcLoadJoinedGroups() {
+  if (!globalConnectDb || !gcCurrentUser) return;
+  try {
+    const snap = await globalConnectDb.collection("gcGroupMembers")
+      .where("uid", "==", gcCurrentUser.uid).get();
+    gcJoinedGroups = new Set(snap.docs.map(d => d.data().groupId));
+    gcRenderGroups();
+  } catch (error) {
+    console.warn("Could not load group memberships", error);
+  }
+}
+async function gcToggleGroup(groupId) {
+  if (!globalConnectDb || !gcCurrentUser) {
+    alert("Firebase connection ready hone ke baad groups join kar paoge.");
+    return;
+  }
+  const ref = globalConnectDb.collection("gcGroupMembers").doc(groupId + "_" + gcCurrentUser.uid);
+  try {
+    if (gcJoinedGroups.has(groupId)) {
+      await ref.delete();
+      gcJoinedGroups.delete(groupId);
+    } else {
+      const group = GC_GROUPS.find(g => g[0] === groupId);
+      await ref.set({
+        groupId,
+        uid: gcCurrentUser.uid,
+        groupName: group ? group[1] : groupId,
+        joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      gcJoinedGroups.add(groupId);
+    }
+    gcRenderGroups();
+  } catch (error) {
+    console.error("Group join/leave failed", error);
+    alert("Group join nahi ho paaya. Firestore security rules abhi access block kar rahe hain.");
+  }
+}
+async function gcSaveProfile() {
+  if (!globalConnectDb || !gcCurrentUser) return alert("Firebase se connection abhi ready nahi hai.");
+  const name = document.getElementById("gcName").value.trim();
+  if (!name) return alert("Display name zaroor bharo.");
+  const profile = {
+    uid: gcCurrentUser.uid, name,
+    course: document.getElementById("gcCourse").value.trim(),
+    country: document.getElementById("gcCountry").value.trim(),
+    interests: document.getElementById("gcInterests").value.trim(),
+    college: document.getElementById("gcCollege").value.trim(),
+    discoverable: document.getElementById("gcDiscoverable").checked,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try {
+    await globalConnectDb.collection("gcProfiles").doc(gcCurrentUser.uid).set(profile, {merge:true});
+    gcStatus("Your student profile is saved.", "Connected");
+    await gcLoadStudents();
+    alert("Profile saved!");
+  } catch (error) {
+    console.error("Profile save failed", error);
+    gcStatus("Firestore access blocked. Secure database rules need to be added.", "Rules needed");
+  }
+}
+async function gcLoadOwnProfile() {
+  if (!globalConnectDb || !gcCurrentUser) return;
+  try {
+    const snap = await globalConnectDb.collection("gcProfiles").doc(gcCurrentUser.uid).get();
+    if (!snap.exists) return;
+    const p = snap.data();
+    document.getElementById("gcName").value = p.name || "";
+    document.getElementById("gcCourse").value = p.course || "";
+    document.getElementById("gcCountry").value = p.country || "";
+    document.getElementById("gcInterests").value = p.interests || "";
+    document.getElementById("gcCollege").value = p.college || "";
+    document.getElementById("gcDiscoverable").checked = p.discoverable !== false;
+    await gcLoadStudents();
+  } catch (error) { console.warn("Could not load own profile", error); }
+}
+async function gcLoadStudents() {
+  const root = document.getElementById("gcStudents");
+  if (!globalConnectDb || !gcCurrentUser) return;
+  try {
+    const snap = await globalConnectDb.collection("gcProfiles").where("discoverable","==",true).limit(100).get();
+    gcProfilesCache = snap.docs.map(d => d.data()).filter(p => p.uid !== gcCurrentUser.uid);
+    gcRenderStudents();
+  } catch (error) {
+    root.innerHTML = '<p class="muted">Student directory is waiting for Firestore security rules.</p>';
+    console.warn("Student discovery unavailable", error);
+  }
+}
+function gcRenderStudents() {
+  const root = document.getElementById("gcStudents");
+  if (!root) return;
+  const q = (document.getElementById("gcSearch")?.value || "").toLowerCase().trim();
+  const matches = gcProfilesCache.filter(p => [p.name,p.course,p.country,p.interests].join(" ").toLowerCase().includes(q));
+  root.innerHTML = matches.length ? matches.map(p =>
+    `<div class="gc-person"><div><strong>${gcEscape(p.name || "Student")}</strong><small>${gcEscape([p.course,p.country,p.interests].filter(Boolean).join(" · "))}</small></div><button class="btn secondary" onclick="gcOpenDirect('${gcEscape(p.uid)}','${gcEscape(p.name || "Student")}')">Chat</button></div>`
+  ).join("") : '<p class="muted">No students found yet. Invite friends to join!</p>';
+}
+async function gcOpenDirect(otherUid, otherName) {
+  if (!gcCurrentUser || !globalConnectDb) return;
+  const ids = [gcCurrentUser.uid, otherUid].sort();
+  const roomId = "dm_" + ids.join("_");
+  await gcOpenRoom(roomId, otherName, "direct");
+}
+async function gcOpenGroup(groupId) {
+  const group = GC_GROUPS.find(g => g[0] === groupId);
+  if (!group) return;
+  await gcOpenRoom(gcGroupId(groupId), group[1], "group");
+}
+async function gcOpenRoom(roomId, title, type) {
+  if (!gcCurrentUser || !globalConnectDb) return;
+  try {
+    const roomRef = globalConnectDb.collection("gcRooms").doc(roomId);
+    if (type === "group") {
+      await roomRef.set({type:"group", title, groupKey:roomId.replace("group_","")}, {merge:true});
+    } else {
+      const ids = roomId.substring(3).split("_");
+      await roomRef.set({type:"direct", members:ids}, {merge:true});
+    }
+    gcActiveRoom = {id:roomId,title};
+    document.getElementById("gcChatHeading").textContent = title;
+    gcSetChatEnabled(true);
+    if (gcMessagesUnsubscribe) gcMessagesUnsubscribe();
+    const box = document.getElementById("gcMessages");
+    box.innerHTML = '<p class="muted">Loading messages…</p>';
+    gcMessagesUnsubscribe = roomRef.collection("messages").orderBy("createdAt","asc").limit(100)
+      .onSnapshot(snapshot => {
+        box.innerHTML = "";
+        snapshot.forEach(doc => {
+          const m = doc.data();
+          const bubble = document.createElement("div");
+          bubble.className = "gc-bubble" + (m.uid === gcCurrentUser.uid ? " mine" : "");
+          const body = document.createElement("div");
+          body.textContent = m.text || "";
+          const meta = document.createElement("small");
+          meta.textContent = (m.name || "Student") + (m.createdAt?.toDate ? " · " + m.createdAt.toDate().toLocaleString() : "");
+          bubble.append(body,meta); box.appendChild(bubble);
+        });
+        box.scrollTop = box.scrollHeight;
+      }, error => {
+        console.warn("Message listener failed", error);
+        box.innerHTML = '<p class="muted">Chat access needs secure Firestore rules.</p>';
+      });
+  } catch (error) {
+    console.error("Could not open chat", error);
+    gcStatus("Chat is blocked until Firestore rules are configured.", "Rules needed");
+  }
+}
+async function gcSendMessage() {
+  const input = document.getElementById("gcMessageInput");
+  const text = input.value.trim();
+  if (!text || !gcActiveRoom || !gcCurrentUser || !globalConnectDb) return;
+  if (text.length > 1500) return alert("Message bahut lamba hai.");
+  input.value = "";
+  try {
+    await globalConnectDb.collection("gcRooms").doc(gcActiveRoom.id).collection("messages").add({
+      uid:gcCurrentUser.uid,
+      name:(document.getElementById("gcName").value.trim() || "Student"),
+      text,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    input.value = text;
+    console.error("Message send failed", error);
+    gcStatus("Message send blocked by Firestore rules.", "Rules needed");
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("gcMessageInput");
+  if (input) input.addEventListener("keydown", e => { if (e.key === "Enter") gcSendMessage(); });
+  gcRenderGroups();
+});
+
+
+// 6. APP INITIALIZATION
+
+function initializeApp() {
+  updateProfileUI();
+  updateDashboard();
+
+  renderAttendance();
+  renderGrades();
+  renderTimetable();
+  renderNotes();
+  renderExpenses();
+  renderExams();
+
+  resetTimer();
+}
+
+initializeApp();
+initializeGlobalConnectFirebase();
+
+// ==========================================
+// END OF STUDENT LIFE OS
+// ==========================================
+
+</script>
+</body>
+</html>
